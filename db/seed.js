@@ -7,7 +7,11 @@ const {
     updatePost,
     getAllPosts,
     getPostsByUser,
-    getUserById
+    getUserById,
+    createTags,
+    createPostTag,
+    addTagsToPost,
+    getPostById
 } = require('./index');
 
 async function createInitialUsers() {
@@ -29,11 +33,20 @@ async function createInitialPosts() {
   try{
     const [albert,sandra,glamgal] = await getAllUsers();
 
-    await createPost({
+    const promiseArray = [createPost({
       authorId: albert.id,
       title: "First Post",
       content: "This is my first post. I hope I love writing blogs as much as I love writing them."
-    });
+    }),createPost({
+      authorId: sandra.id,
+      title: "First Post",
+      content: "This is my first post. I hope I love writing blogs as much as I love writing them."
+    }),createPost({
+      authorId: glamgal.id,
+      title: "First Post",
+      content: "This is my first post. I hope I love writing blogs as much as I love writing them."
+    })];
+    const posts = await Promise.all(promiseArray);
 
   } catch (error) {
     throw error;
@@ -44,11 +57,12 @@ async function dropTables() {
   try {
     console.log("Starting to drop tables...");
     await client.query(`
+      DROP TABLE IF EXISTS post_tags;
+      DROP TABLE IF EXISTS tags;
       DROP TABLE IF EXISTS posts;
-    `);
-    await client.query(`
       DROP TABLE IF EXISTS users;
     `);
+
 
 
     console.log("Finished dropping tables!");
@@ -71,7 +85,6 @@ async function createTables() {
         location varchar(255) NOT NULL,
         active BOOLEAN DEFAULT true
       );
-
     `);
     await client.query(`
       CREATE TABLE posts (
@@ -81,7 +94,20 @@ async function createTables() {
         content TEXT NOT NULL,
         active BOOLEAN DEFAULT true
       );
+    `);
+    await client.query(`
+      CREATE TABLE tags (
+        id SERIAL PRIMARY KEY,
+        name varchar(255) UNIQUE NOT NULL
+      );
+    `);
 
+    await client.query(`
+      CREATE TABLE post_tags (
+      "postId" INTEGER REFERENCES posts(id),
+      "tagId" INTEGER REFERENCES tags(id),
+      UNIQUE ("postId","tagId")
+      );
     `);
 
     console.log("Finished building tables!");
@@ -99,11 +125,35 @@ async function rebuildDB() {
     await createTables();
     await createInitialUsers();
     await createInitialPosts();
+    await createInitialTags();
   } catch (error) {
     throw error;
   }
 }
 
+async function createInitialTags() {
+  try {
+    console.log("Starting to create tags...");
+
+    const [happy, sad, inspo, catman] = await createTags([
+      '#happy',
+      '#worst-day-ever',
+      '#youcandoanything',
+      '#catmandoeverything'
+    ]);
+
+    const [postOne, postTwo, postThree] = await getAllPosts();
+
+    await addTagsToPost(postOne.id, [happy, inspo]);
+    // await addTagsToPost(postTwo.id, [sad, inspo]);
+    // await addTagsToPost(postThree.id, [happy, catman, inspo]);
+
+    console.log("Finished creating tags!");
+  } catch (error) {
+    console.log("Error creating tags!");
+    throw error;
+  }
+}
 async function testDB() {
   try {
     console.log("Starting to test database...");
