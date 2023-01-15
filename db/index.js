@@ -125,6 +125,7 @@ async function getAllPosts() {
       FROM posts;
     `);
 
+
     const posts = await Promise.all(postIds.map(
         post => getPostById( post.id )
     ));
@@ -159,8 +160,8 @@ async function getUserById(userId) {
     const { rows: [ user ] } = await client.query(`
       SELECT id, username, name, location, active
       FROM users
-      WHERE id=${ userId }
-    `);
+      WHERE id=$1
+    `,[userId]);
 
     if (!user) {
       return null
