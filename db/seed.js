@@ -8,13 +8,8 @@ const {
     getAllPosts,
     getPostsByUser,
     getUserById,
-    createTags,
-    createPostTag,
-    addTagsToPost,
-    getPostById,
     getAllTags,
   getPostsByTagName,
-  getUserByUsername
 } = require('./index');
 
 async function createInitialUsers() {
